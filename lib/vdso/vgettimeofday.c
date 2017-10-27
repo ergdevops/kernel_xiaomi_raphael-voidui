@@ -414,24 +414,7 @@ int __vdso_clock_getres(clockid_t clock, struct timespec *res)
 notrace time_t __vdso_time(time_t *t)
 {
 	const struct vdso_data *vd = __get_datapage();
-
-#ifdef USE_SYSCALL
-	time_t result;
-
-	if (vd->use_syscall & USE_SYSCALL_MASK) {
-		/* Facsimile of syscall implementation (faster by a few ns) */
-		struct timeval tv;
-		int ret = gettimeofday_fallback(&tv, NULL);
-
-		if (ret < 0)
-			return ret;
-		result = tv.tv_sec;
-	} else {
-		result = READ_ONCE(vd->xtime_coarse_sec);
-	}
-#else
 	time_t result = READ_ONCE(vd->xtime_coarse_sec);
-#endif
 
 	if (t)
 		*t = result;
