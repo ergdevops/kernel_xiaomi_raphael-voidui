@@ -370,7 +370,6 @@ void update_vsyscall(struct timekeeper *tk)
 	vdso_data->wtm_clock_nsec		= tk->wall_to_monotonic.tv_nsec;
 
 	if (!use_syscall) {
-#endif
 		struct timespec btm = ktime_to_timespec(tk->offs_boot);
 
 		/* tkr_mono.cycle_last == tkr_raw.cycle_last */
