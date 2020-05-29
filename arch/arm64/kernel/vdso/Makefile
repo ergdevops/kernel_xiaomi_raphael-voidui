@@ -15,31 +15,14 @@ obj-vdso-s := $(addprefix $(obj)/, $(obj-vdso-s))
 obj-vdso-c := $(addprefix $(obj)/, $(obj-vdso-c))
 obj-vdso   := $(obj-vdso-c) $(obj-vdso-s)
 
-ldflags-y := -shared -soname=linux-vdso.so.1  --hash-style=sysv \
-		--build-id -n -T
-ccflags-y := -fno-stack-protector
-ccflags-y += -DDISABLE_BRANCH_PROFILING -DBUILD_VDSO -ffixed-x18
-ccflags-y += $(call cc-option, -fno-whole-program)
-ccflags-y += -Ofast
-
-# Force -O2 to avoid libgcc dependencies
-CFLAGS_REMOVE_vgettimeofday.o = -pg -Os
-CFLAGS_vgettimeofday.o = -fPIC
-ifeq ($(cc-name),clang)
-CFLAGS_vgettimeofday.o = -Ofast
-else
-CFLAGS_vgettimeofday.o = -O2
-CFLAGS_vgettimeofday.o += -mcmodel=tiny
-CFLAGS_vgettimeofday.o += -fasynchronous-unwind-tables
-endif
+ldflags-y := -shared -nostdlib -soname=linux-vdso.so.1 \
+		$(call ld-option, --hash-style=sysv) -n -T
+ccflags-y += $(DISABLE_LTO)
 
 CFLAGS_REMOVE_vgettimeofday.o += $(CC_FLAGS_SCS)
 
 # Disable gcov profiling for VDSO code
 GCOV_PROFILE := n
-KASAN_SANITIZE := n
-UBSAN_SANITIZE := n
-KCOV_INSTRUMENT := n
 
 obj-y += vdso.o
 extra-y += vdso.lds
@@ -75,8 +58,6 @@ $(obj-vdso-c): %.o: %.c FORCE
 	$(call if_changed_dep,vdsocc)
 
 # Actual build commands
-quiet_cmd_vdsocc = VDSOC   $@
-      cmd_vdsocc = ${CC} $(c_flags) -c -o $@ $<
 quiet_cmd_vdsoas = VDSOA   $@
       cmd_vdsoas = $(CC) $(a_flags) -c -o $@ $<
 
